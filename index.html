@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        </style>
+        <title>INFRASTRUCTURES HYDRAULIQUES ET SANITAIRES DE BAFOUSSAM 1er</title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet-svg-shape-markers.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/BAFOUSSAM1er_1.js"></script>
+        <script src="data/POINTSDEAU_2.js"></script>
+        <script src="data/FORMATIONSSANITAIRES_3.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[5.407706733681856,10.283719711924133],[5.571267582389509,10.584271984140603]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // add class to format popup if it contains media
+		function addClassToPopupIfMedia(content, popup) {
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = content;
+			if (tempDiv.querySelector('td img')) {
+				popup._contentNode.classList.add('media');
+					// Delay to force the redraw
+					setTimeout(function() {
+						popup.update();
+					}, 10);
+			} else {
+				popup._contentNode.classList.remove('media');
+			}
+		}
+        var title = new L.Control({'position':'topleft'});
+        title.onAdd = function (map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        title.update = function () {
+            this._div.innerHTML = '<h2>INFRASTRUCTURES HYDRAULIQUES ET SANITAIRES DE BAFOUSSAM 1er</h2>';
+        };
+        title.addTo(map);
+        var abstract = new L.Control({'position':'topleft'});
+        abstract.onAdd = function (map) {
+            this._div = L.DomUtil.create('div',
+            'leaflet-control abstract');
+            this._div.id = 'abstract'
+
+                abstract.show();
+                return this._div;
+            };
+            abstract.show = function () {
+                this._div.classList.remove("abstract");
+                this._div.classList.add("abstractUncollapsed");
+                this._div.innerHTML = 'Cartographie Localisant les Points d\'Eau et Formations Sanitaires dans la Commune de Bafoussam 1er';
+        };
+        abstract.addTo(map);
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_OSMStandard_0');
+        map.getPane('pane_OSMStandard_0').style.zIndex = 400;
+        var layer_OSMStandard_0 = L.tileLayer('http://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OSMStandard_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors, CC-BY-SA</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OSMStandard_0;
+        map.addLayer(layer_OSMStandard_0);
+        function pop_BAFOUSSAM1er_1(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">nom</th>\
+                        <td>' + (feature.properties['nom'] !== null ? autolinker.link(String(feature.properties['nom']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">sup</th>\
+                        <td>' + (feature.properties['sup'] !== null ? autolinker.link(String(feature.properties['sup']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">pop</th>\
+                        <td>' + (feature.properties['pop'] !== null ? autolinker.link(String(feature.properties['pop']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_BAFOUSSAM1er_1_0() {
+            return {
+                pane: 'pane_BAFOUSSAM1er_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 3.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(114,155,111,0.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_BAFOUSSAM1er_1');
+        map.getPane('pane_BAFOUSSAM1er_1').style.zIndex = 401;
+        map.getPane('pane_BAFOUSSAM1er_1').style['mix-blend-mode'] = 'normal';
+        var layer_BAFOUSSAM1er_1 = new L.geoJson(json_BAFOUSSAM1er_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_BAFOUSSAM1er_1',
+            layerName: 'layer_BAFOUSSAM1er_1',
+            pane: 'pane_BAFOUSSAM1er_1',
+            onEachFeature: pop_BAFOUSSAM1er_1,
+            style: style_BAFOUSSAM1er_1_0,
+        });
+        bounds_group.addLayer(layer_BAFOUSSAM1er_1);
+        map.addLayer(layer_BAFOUSSAM1er_1);
+        function pop_POINTSDEAU_2(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">nom_pd</th>\
+                        <td class="visible-with-data" id="nom_pd">' + (feature.properties['nom_pd'] !== null ? autolinker.link(String(feature.properties['nom_pd']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">etat_pd</th>\
+                        <td>' + (feature.properties['etat_pd'] !== null ? autolinker.link(String(feature.properties['etat_pd']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">abscisse</th>\
+                        <td>' + (feature.properties['abscisse'] !== null ? autolinker.link(String(feature.properties['abscisse']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">ordonnee</th>\
+                        <td>' + (feature.properties['ordonnee'] !== null ? autolinker.link(String(feature.properties['ordonnee']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_POINTSDEAU_2_0(feature) {
+            switch(String(feature.properties['nom_pd'])) {
+                case 'AEP':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(213,191,109,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'borne_fontaine':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(237,38,32,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'chateaux_deau':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(124,232,154,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'forage':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,106,193,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'puis':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(134,38,218,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'source':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(147,207,94,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'zone_de_captage':
+                    return {
+                pane: 'pane_POINTSDEAU_2',
+                shape: 'diamond',
+                radius: 5.2,
+                opacity: 1,
+                color: 'rgba(128,17,25,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 2.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(108,137,231,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_POINTSDEAU_2');
+        map.getPane('pane_POINTSDEAU_2').style.zIndex = 402;
+        map.getPane('pane_POINTSDEAU_2').style['mix-blend-mode'] = 'normal';
+        var layer_POINTSDEAU_2 = new L.geoJson(json_POINTSDEAU_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_POINTSDEAU_2',
+            layerName: 'layer_POINTSDEAU_2',
+            pane: 'pane_POINTSDEAU_2',
+            onEachFeature: pop_POINTSDEAU_2,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_POINTSDEAU_2_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_POINTSDEAU_2);
+        map.addLayer(layer_POINTSDEAU_2);
+        function pop_FORMATIONSSANITAIRES_3(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">nom_fs</th>\
+                        <td>' + (feature.properties['nom_fs'] !== null ? autolinker.link(String(feature.properties['nom_fs']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">type_fs</th>\
+                        <td>' + (feature.properties['type_fs'] !== null ? autolinker.link(String(feature.properties['type_fs']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">ambulance</th>\
+                        <td>' + (feature.properties['ambulance'] !== null ? autolinker.link(String(feature.properties['ambulance']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">abscisse_x</th>\
+                        <td>' + (feature.properties['abscisse_x'] !== null ? autolinker.link(String(feature.properties['abscisse_x']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">ordonnee_y</th>\
+                        <td>' + (feature.properties['ordonnee_y'] !== null ? autolinker.link(String(feature.properties['ordonnee_y']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">contact</th>\
+                        <td>' + (feature.properties['contact'] !== null ? autolinker.link(String(feature.properties['contact']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">service</th>\
+                        <td>' + (feature.properties['service'] !== null ? autolinker.link(String(feature.properties['service']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_FORMATIONSSANITAIRES_3_0(feature) {
+            switch(String(feature.properties['type_fs'])) {
+                case 'C':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(72,223,77,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'CAS':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(232,49,45,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'CM':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(175,225,89,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'CMA':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(31,24,223,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'CS':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(158,30,213,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'CSI':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(17,212,154,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'H':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(236,127,196,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'HD':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(218,170,56,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'HR':
+                    return {
+                pane: 'pane_FORMATIONSSANITAIRES_3',
+                radius: 4.8,
+                opacity: 1,
+                color: 'rgba(0,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(80,180,238,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_FORMATIONSSANITAIRES_3');
+        map.getPane('pane_FORMATIONSSANITAIRES_3').style.zIndex = 403;
+        map.getPane('pane_FORMATIONSSANITAIRES_3').style['mix-blend-mode'] = 'normal';
+        var layer_FORMATIONSSANITAIRES_3 = new L.geoJson(json_FORMATIONSSANITAIRES_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_FORMATIONSSANITAIRES_3',
+            layerName: 'layer_FORMATIONSSANITAIRES_3',
+            pane: 'pane_FORMATIONSSANITAIRES_3',
+            onEachFeature: pop_FORMATIONSSANITAIRES_3,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_FORMATIONSSANITAIRES_3_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_FORMATIONSSANITAIRES_3);
+        map.addLayer(layer_FORMATIONSSANITAIRES_3);
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var overlaysTree = [
+            {label: 'FORMATIONS SANITAIRES<br /><table><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_Clinique0.png" /></td><td>Clinique</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_CabinetdeSoins1.png" /></td><td>Cabinet de Soins</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_CentreMedical2.png" /></td><td>Centre Medical</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_CentreMedicaldArrondissement3.png" /></td><td>Centre Medical d\'Arrondissement</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_CentredeSanté4.png" /></td><td>Centre de Santé</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_CentredeSantéIntegré5.png" /></td><td>Centre de Santé Integré</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_Hopital6.png" /></td><td>Hopital</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_HopitaldeDistrict7.png" /></td><td>Hopital de District</td></tr><tr><td style="text-align: center;"><img src="legend/FORMATIONSSANITAIRES_3_HopitalRegional8.png" /></td><td>Hopital Regional</td></tr></table>', layer: layer_FORMATIONSSANITAIRES_3},
+            {label: 'POINTS D\'EAU<br /><table><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_AdductionenEauPotable0.png" /></td><td>Adduction en Eau Potable</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_BorneFontaine1.png" /></td><td>Borne Fontaine</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_chateauxdEau2.png" /></td><td>chateaux d\'Eau</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_Forage3.png" /></td><td>Forage</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_Puit4.png" /></td><td>Puit</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_Source5.png" /></td><td>Source</td></tr><tr><td style="text-align: center;"><img src="legend/POINTSDEAU_2_ZonedeCaptage6.png" /></td><td>Zone de Captage</td></tr></table>', layer: layer_POINTSDEAU_2},
+            {label: '<img src="legend/BAFOUSSAM1er_1.png" /> BAFOUSSAM 1er', layer: layer_BAFOUSSAM1er_1},
+            {label: "OSM Standard", layer: layer_OSMStandard_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: true,
+        });
+        lay.addTo(map);
+        setBounds();
+        </script>
+    </body>
+</html>
